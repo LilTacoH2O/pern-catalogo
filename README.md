@@ -101,13 +101,15 @@ Abre http://localhost:5173.
 
 | Método | Ruta | Respuesta |
 |---|---|---|
-| GET | `/api/products` | `200` con `{ "success": true, "data": [ ...productos ] }`. Si no hay productos, `data` es `[]` |
+| GET | `/api/products` | `200` con `{ "success": true, "data": [ ...productos ] }`. Sin `search`, devuelve el catálogo completo; si no hay productos, `data` es `[]` |
+| GET | `/api/products?search=termo` | Busca por coincidencia parcial del nombre, sin distinguir mayúsculas/minúsculas. Si no hay coincidencias, responde `200` con `data: []` |
 
 Si la base de datos falla, responde `500` con `{ "success": false, "message": "Error interno del servidor" }`. Una ruta inexistente responde `404`.
 
 ## Pruebas
 
 - **HU01:** prueba manual en Postman (`GET http://localhost:3000/api/products`) con dos pruebas automáticas en Post-response, que verifican el estado 200 y que `data` sea una lista. Se ejecutó con 2 productos y con la tabla vacía, y se demostró en React.
+- **HU06:** probar en Postman con coincidencia (`?search=termo`), sin coincidencia y sin parámetro; la búsqueda se aplica desde el campo de la página principal.
 - **HU02 en adelante:** pruebas automatizadas con Jest y Supertest (`npm test` en `backend`). Se agregan en la Jornada 2.
 
 ## Flujo de trabajo

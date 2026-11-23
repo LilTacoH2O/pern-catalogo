@@ -9,10 +9,12 @@ export const useProductStore = create((set) => ({
   loading: false,
   error: null,
 
-  fetchProducts: async () => {
+  fetchProducts: async (search = "") => {
     set({ loading: true, error: null });
     try {
-      const response = await axios.get(`${API_URL}/api/products`);
+      const response = await axios.get(`${API_URL}/api/products`, {
+        params: search ? { search } : {},
+      });
       set({ products: response.data.data });
     } catch (err) {
       console.error("Error al cargar productos:", err.message);
