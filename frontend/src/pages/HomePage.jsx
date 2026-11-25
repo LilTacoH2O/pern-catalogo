@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
-import { PackageOpen, RefreshCw, Search } from "lucide-react";
+import { PackageOpen, Plus, RefreshCw, Search } from "lucide-react";
 import { useProductStore } from "../store/useProductStore";
 import ProductCard from "../components/ProductCard";
+import ProductForm from "../components/ProductForm";
 
 export default function HomePage() {
-  const { products, loading, error, fetchProducts } = useProductStore();
+  const { products, loading, error, fetchProducts, createProduct } = useProductStore();
   const [search, setSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
+  // HU02 · alta de producto
+  const [showCreate, setShowCreate] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
 
   // Al montar la página se pide el catálogo a la API
   useEffect(() => {
@@ -20,18 +26,44 @@ export default function HomePage() {
     fetchProducts(query);
   };
 
+  const handleCreate = async (data) => {
+    setSaving(true);
+    setCreateError("");
+    const result = await createProduct(data);
+    setSaving(false);
+    if (result.ok) {
+      setShowCreate(false);
+      setNotice(`Producto "${data.name.trim()}" registrado.`);
+    } else {
+      setCreateError(result.message); // el modal queda abierto con los datos capturados
+    }
+  };
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Productos disponibles</h1>
-        <button
-          className="btn btn-ghost btn-circle"
-          onClick={() => fetchProducts(appliedSearch)}
-          title="Recargar"
-        >
-          <RefreshCw className="size-5" />
-        </button>
+        <div className="flex gap-2">
+          <button className="btn btn-primary" onClick={() => { setCreateError(""); setShowCreate(true); }}>
+            <Plus className="size-5" />
+            Agregar producto
+          </button>
+          <button
+            className="btn btn-ghost btn-circle"
+            onClick={() => fetchProducts(appliedSearch)}
+            title="Recargar"
+          >
+            <RefreshCw className="size-5" />
+          </button>
+        </div>
       </div>
+
+      {notice && (
+        <div role="status" className="alert alert-success mb-6">
+          <span>{notice}</span>
+          <button className="btn btn-ghost btn-sm" onClick={() => setNotice("")}>Cerrar</button>
+        </div>
+      )}
 
       <form className="mb-6 flex gap-2" onSubmit={handleSearch}>
         <input
@@ -73,6 +105,16 @@ export default function HomePage() {
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
+      )}
+      {showCreate && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="mb-4 text-xl font-bold">Agregar producto</h3>
+            {createError && <div role="alert" className="alert alert-error mb-4">{createError}</div>}
+            <ProductForm onSubmit={handleCreate} submitLabel="Guardar producto" submitting={saving} />
+            <button className="btn btn-ghost mt-2 w-full" onClick={() => setShowCreate(false)}>Cancelar</button>
+          </div>
+        </dialog>
       )}
     </main>
   );

@@ -10,13 +10,23 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: process.env.CLIENT_URL || "http://localhost:5173" }));
 app.use(helmet());      // encabezados HTTP de seguridad
-app.use(morgan("dev")); // registra método, ruta y código HTTP
+// registra método, ruta y código HTTP (se omite al correr las pruebas)
+if (process.env.NODE_ENV !== "test") app.use(morgan("dev"));
 
 app.use("/api/products", productRoutes);
 
 // Ruta no encontrada
 app.use((req, res) => {
   res.status(404).json({ success: false, message: "Ruta no encontrada" });
+});
+
+// JSON mal formado u otro error no controlado
+app.use((err, req, res, next) => {
+  if (err.type === "entity.parse.failed") {
+    return res.status(400).json({ success: false, message: "El cuerpo de la petición no es JSON válido" });
+  }
+  console.error(err);
+  res.status(500).json({ success: false, message: "Error interno del servidor" });
 });
 
 // app se exporta sin escuchar el puerto para poder probarla con Supertest (HU02)
