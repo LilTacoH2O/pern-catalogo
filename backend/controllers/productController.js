@@ -23,3 +23,21 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ success: false, message: "Error interno del servidor" });
   }
 };
+
+// POST /api/products -> registra un producto (HU02)
+// req.body ya viene validado por Zod (DTO con name, price e image)
+export const createProduct = async (req, res) => {
+  const { name, price, image } = req.body;
+  try {
+    // Consulta parametrizada: los valores viajan como parámetros, no como texto del SQL
+    const [product] = await sql`
+      INSERT INTO products (name, price, image)
+      VALUES (${name}, ${price}, ${image})
+      RETURNING id, name, price, image, created_at
+    `;
+    res.status(201).json({ success: true, data: product });
+  } catch (error) {
+    console.error("Error en createProduct:", error.message);
+    res.status(500).json({ success: false, message: "Error interno del servidor" });
+  }
+};
