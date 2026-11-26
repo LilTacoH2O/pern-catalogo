@@ -15,3 +15,13 @@ export const validateBody = (schema) => (req, res, next) => {
   req.body = result.data; // DTO ya limpio: name sin espacios, price numérico
   next();
 };
+
+// Valida que :id sea un entero positivo; si no, responde 400 sin tocar la base (HU03)
+export const validateId = (req, res, next) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({ success: false, message: "El id debe ser un número entero positivo" });
+  }
+  req.params.id = id;
+  next();
+};
