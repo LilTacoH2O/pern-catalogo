@@ -15,17 +15,17 @@ Práctica guiada de la Unidad 4 de Ingeniería de Software (TecNM Celaya). Es un
 - Martínez Flores Javier Alexander
 - Montalvo Cano Oscar Uriel
 - Rodríguez Gutiérrez Leonardo
-- Jairo
+- Melgar Obrajero Jairo Antonio
 
 ## Avance por jornada
 
 | Jornada | Historia | Estado | Etiqueta |
 |---|---|---|---|
-| 1 | HU01 · Consultar catálogo | En revisión | `u4-j1` |
-| 1 | HU06 · Buscar producto por nombre (función adicional) | Lista para iniciar | |
-| 2 | HU02 · Dar de alta | Pendiente | |
-| 3 | HU03 · Editar | Pendiente | |
-| 4 | HU04 · Eliminar | Pendiente | |
+| 1 | HU01 · Consultar catálogo | Liberada | `u4-j1` |
+| 1 | HU06 · Buscar producto por nombre (función adicional) | Liberada | `u4-j1` |
+| 2 | HU02 · Dar de alta | Liberada | `u4-j2` |
+| 3 | HU03 · Editar | Liberada | `u4-j3` |
+| 4 | HU04 · Eliminar | Liberada | `u4-j4` |
 | 5 | HU05 · Usar el catálogo publicado | Pendiente | |
 | — | INV01 · Diseñar el acceso por roles | Pendiente | |
 
@@ -39,13 +39,18 @@ pern-catalogo/
 │   ├── config/db.js           # conexión a Neon con sql`...`
 │   ├── routes/productRoutes.js
 │   ├── controllers/productController.js
+│   ├── dto/productDto.js      # esquema Zod de name, price e image
+│   ├── middleware/validate.js # validateBody (400 con detalle) y validateId
+│   ├── tests/                 # pruebas Jest + Supertest (HU02, HU03, HU04)
 │   ├── db/schema.sql          # tabla products
 │   ├── db/seed.sql            # 2 productos de ejemplo
 │   └── .env.example
 └── frontend/
-    ├── src/store/useProductStore.js   # estado del catálogo + Axios
-    ├── src/pages/HomePage.jsx         # carga, vacío, error y lista
-    ├── src/components/ProductCard.jsx
+    ├── src/store/useProductStore.js   # estado del catálogo + Axios (CRUD)
+    ├── src/pages/HomePage.jsx         # lista, búsqueda y modales de alta, edición y baja
+    ├── src/components/ProductForm.jsx # formulario reutilizable (alta y edición)
+    ├── src/components/ConfirmDeleteModal.jsx
+    ├── src/components/ProductCard.jsx # botones Editar y Eliminar
     ├── src/components/Navbar.jsx
     └── .env.example
 ```
@@ -103,6 +108,22 @@ Abre http://localhost:5173.
 |---|---|---|
 | GET | `/api/products` | `200` con `{ "success": true, "data": [ ...productos ] }`. Sin `search`, devuelve el catálogo completo; si no hay productos, `data` es `[]` |
 | GET | `/api/products?search=termo` | Busca por coincidencia parcial del nombre, sin distinguir mayúsculas/minúsculas. Si no hay coincidencias, responde `200` con `data: []` |
+| POST | `/api/products` | `201` con el producto creado. Datos inválidos: `400` |
+| PUT | `/api/products/:id` | `200` con el producto actualizado. Id inexistente: `404`. Datos o id inválidos: `400` |
+| DELETE | `/api/products/:id` | `200` con el producto retirado. Id inexistente: `404`. Id inválido: `400` |
+
+Cuerpo de POST y PUT: `{ "name": "Lámpara", "price": 459.9, "image": "https://..." }`.
+
+### Validación (Zod)
+
+| Campo | Regla |
+|---|---|
+| `name` | Texto obligatorio, se recortan espacios, 1 a 255 caracteres |
+| `price` | Número mayor que cero |
+| `image` | URL válida (http o https), máximo 500 caracteres |
+| `:id` | Entero positivo |
+
+Un error de validación responde `400` con `{ "success": false, "message": "Datos inválidos", "errors": [{ "field": "price", "message": "..." }] }` y no toca la base de datos.
 
 Si la base de datos falla, responde `500` con `{ "success": false, "message": "Error interno del servidor" }`. Una ruta inexistente responde `404`.
 
@@ -110,7 +131,20 @@ Si la base de datos falla, responde `500` con `{ "success": false, "message": "E
 
 - **HU01:** prueba manual en Postman (`GET http://localhost:3000/api/products`) con dos pruebas automáticas en Post-response, que verifican el estado 200 y que `data` sea una lista. Se ejecutó con 2 productos y con la tabla vacía, y se demostró en React.
 - **HU06:** probar en Postman con coincidencia (`?search=termo`), sin coincidencia y sin parámetro; la búsqueda se aplica desde el campo de la página principal.
-- **HU02 en adelante:** pruebas automatizadas con Jest y Supertest (`npm test` en `backend`). Se agregan en la Jornada 2.
+- **HU02 a HU04:** pruebas automatizadas con Jest y Supertest. La base se simula, así que no se necesita Neon para correrlas:
+
+```bash
+cd backend
+npm test
+```
+
+| Archivo | Casos | Qué verifica |
+|---|---|---|
+| `tests/hu02-alta.test.js` | 6 | Alta válida 201, DTO limpio, precio negativo o no numérico, nombre vacío e imagen inválida (400) |
+| `tests/hu03-editar.test.js` | 7 | Edición válida 200, consulta parametrizada, id inexistente 404, id no numérico y datos inválidos (400) |
+| `tests/hu04-eliminar.test.js` | 3 | Eliminación 200, id inexistente 404, id inválido 400 |
+
+Resultado esperado: **16 pruebas pasan**.
 
 ## Flujo de trabajo
 
