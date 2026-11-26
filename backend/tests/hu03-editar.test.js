@@ -1,4 +1,5 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import { authHeader } from "./helpers/auth.js"; // INV01: las rutas de escritura piden token
 
 // Se reemplaza la conexión a Neon por un simulador: las pruebas no tocan la base real
 const sql = jest.fn();
@@ -19,7 +20,7 @@ describe("HU03 · PUT /api/products/:id", () => {
   it("edición válida responde 200 y devuelve el producto actualizado", async () => {
     sql.mockResolvedValueOnce([{ id: 5, name: "Lámpara LED", price: "499.50", image: valido.image }]);
 
-    const res = await request(app).put("/api/products/5").send(valido);
+    const res = await request(app).put("/api/products/5").set(authHeader("editor")).send(valido);
 
     expect(res.status).toBe(200);
     expect(res.body.success).toBe(true);
@@ -30,7 +31,7 @@ describe("HU03 · PUT /api/products/:id", () => {
   it("usa consulta parametrizada con el DTO limpio y el id numérico", async () => {
     sql.mockResolvedValueOnce([{ id: 5 }]);
 
-    await request(app).put("/api/products/5").send(valido);
+    await request(app).put("/api/products/5").set(authHeader("editor")).send(valido);
 
     const valores = sql.mock.calls[0].slice(1); // [name, price, image, id]
     expect(valores).toEqual(["Lámpara LED", 499.5, valido.image, 5]);
@@ -39,21 +40,21 @@ describe("HU03 · PUT /api/products/:id", () => {
   it("id inexistente responde 404", async () => {
     sql.mockResolvedValueOnce([]);
 
-    const res = await request(app).put("/api/products/999").send(valido);
+    const res = await request(app).put("/api/products/999").set(authHeader("editor")).send(valido);
 
     expect(res.status).toBe(404);
     expect(res.body.success).toBe(false);
   });
 
   it("id que no es número responde 400 y no toca la base", async () => {
-    const res = await request(app).put("/api/products/abc").send(valido);
+    const res = await request(app).put("/api/products/abc").set(authHeader("editor")).send(valido);
 
     expect(res.status).toBe(400);
     expect(sql).not.toHaveBeenCalled();
   });
 
   it("precio negativo responde 400 y no modifica nada", async () => {
-    const res = await request(app).put("/api/products/5").send({ ...valido, price: -5 });
+    const res = await request(app).put("/api/products/5").set(authHeader("editor")).send({ ...valido, price: -5 });
 
     expect(res.status).toBe(400);
     expect(res.body.errors[0].field).toBe("price");
@@ -61,7 +62,7 @@ describe("HU03 · PUT /api/products/:id", () => {
   });
 
   it("nombre vacío responde 400", async () => {
-    const res = await request(app).put("/api/products/5").send({ ...valido, name: "   " });
+    const res = await request(app).put("/api/products/5").set(authHeader("editor")).send({ ...valido, name: "   " });
 
     expect(res.status).toBe(400);
     expect(res.body.errors[0].field).toBe("name");
@@ -69,7 +70,7 @@ describe("HU03 · PUT /api/products/:id", () => {
   });
 
   it("imagen que no es URL responde 400", async () => {
-    const res = await request(app).put("/api/products/5").send({ ...valido, image: "foto.png" });
+    const res = await request(app).put("/api/products/5").set(authHeader("editor")).send({ ...valido, image: "foto.png" });
 
     expect(res.status).toBe(400);
     expect(res.body.errors[0].field).toBe("image");

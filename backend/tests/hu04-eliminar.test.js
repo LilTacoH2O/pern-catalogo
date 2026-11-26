@@ -1,4 +1,5 @@
 import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+import { authHeader } from "./helpers/auth.js"; // INV01: las rutas de escritura piden token
 
 const sql = jest.fn();
 jest.unstable_mockModule("../config/db.js", () => ({ sql }));
@@ -12,7 +13,7 @@ describe("HU04 · DELETE /api/products/:id", () => {
   it("eliminar un producto existente responde 200 y devuelve el producto retirado", async () => {
     sql.mockResolvedValueOnce([{ id: 3, name: "Audífonos inalámbricos" }]);
 
-    const res = await request(app).delete("/api/products/3");
+    const res = await request(app).delete("/api/products/3").set(authHeader("admin"));
 
     expect(res.status).toBe(200);
     expect(res.body.data.id).toBe(3);
@@ -22,14 +23,14 @@ describe("HU04 · DELETE /api/products/:id", () => {
   it("eliminar un ID que ya no existe responde 404", async () => {
     sql.mockResolvedValueOnce([]); // DELETE ... RETURNING sin filas
 
-    const res = await request(app).delete("/api/products/3");
+    const res = await request(app).delete("/api/products/3").set(authHeader("admin"));
 
     expect(res.status).toBe(404);
     expect(res.body.message).toBe("Producto no encontrado");
   });
 
   it("un ID inválido responde 400 sin consultar la base", async () => {
-    const res = await request(app).delete("/api/products/-1");
+    const res = await request(app).delete("/api/products/-1").set(authHeader("admin"));
 
     expect(res.status).toBe(400);
     expect(sql).not.toHaveBeenCalled();
