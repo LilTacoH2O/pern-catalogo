@@ -43,4 +43,16 @@ export const useProductStore = create((set, get) => ({
       return { ok: false, message: mensajeDeError(err) };
     }
   },
+
+  // HU03 · PUT /api/products/:id
+  updateProduct: async (id, data) => {
+    try {
+      const response = await axios.put(`${API_URL}/api/products/${id}`, data);
+      // Se reemplaza el producto editado en la lista sin recargar la página
+      set({ products: get().products.map((p) => (p.id === id ? response.data.data : p)) });
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, message: mensajeDeError(err) };
+    }
+  },
 }));
