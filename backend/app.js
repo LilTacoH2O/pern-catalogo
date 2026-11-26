@@ -4,6 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import "dotenv/config";
 import productRoutes from "./routes/productRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(helmet());      // encabezados HTTP de seguridad
 // registra método, ruta y código HTTP (se omite al correr las pruebas)
 if (process.env.NODE_ENV !== "test") app.use(morgan("dev"));
 
+app.use("/api/auth", authRoutes); // INV01
 app.use("/api/products", productRoutes);
 
 // Ruta no encontrada
