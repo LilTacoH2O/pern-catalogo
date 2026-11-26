@@ -1,0 +1,13 @@
+{
+  "name": "pern-catalogo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Catálogo de productos con PERN · Unidad 4 · HU05 despliegue en un solo servicio",
+  "scripts": {
+    "build": "npm install --prefix backend --omit=dev && npm install --prefix frontend --include=dev && npm run build --prefix frontend",
+    "start": "npm start --prefix backend"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

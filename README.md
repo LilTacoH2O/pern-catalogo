@@ -9,6 +9,8 @@ Práctica guiada de la Unidad 4 de Ingeniería de Software (TecNM Celaya). Es un
 | API REST | Node.js + Express, helmet, morgan, cors, dotenv, Zod, bcryptjs, jsonwebtoken | Valida la petición y el rol, ejecuta la operación y responde JSON |
 | Base de datos | PostgreSQL en Neon (`@neondatabase/serverless`) | Guarda productos y usuarios (con hash de contraseña) y aplica las restricciones del esquema |
 
+**Aplicación publicada:** [pegar URL de Render]
+
 ## Equipo
 
 - Hernández López Clara Paulina
@@ -26,7 +28,7 @@ Práctica guiada de la Unidad 4 de Ingeniería de Software (TecNM Celaya). Es un
 | 2 | HU02 · Dar de alta | Liberada | `u4-j2` |
 | 3 | HU03 · Editar | Liberada | `u4-j3` |
 | 4 | HU04 · Eliminar | Liberada | `u4-j4` |
-| 5 | HU05 · Usar el catálogo publicado | Pendiente | |
+| 5 | HU05 · Usar el catálogo publicado | Liberada | `u4-j5` |
 | — | INV01 · Diseñar el acceso por roles | Liberada | `u4-inv01` |
 
 ## Estructura
@@ -121,6 +123,46 @@ npm run dev
 ```
 
 Abre http://localhost:5173.
+
+## Despliegue (Render)
+
+La aplicación se publica como **un solo servicio**: Express sirve la API en `/api` y, cuando `NODE_ENV=production`, también el build de React (`frontend/dist`). Así la interfaz y la API comparten dominio y no hace falta configurar CORS ni `VITE_API_URL`.
+
+1. Neon ya debe tener las tablas `products` y `users` y los usuarios creados con `npm run users`.
+2. En [Render](https://render.com) entra a **New → Web Service** y conecta este repositorio.
+3. Configura el servicio:
+
+| Campo | Valor |
+|---|---|
+| Branch | `main` |
+| Root Directory | (vacío) |
+| Runtime | Node |
+| Build Command | `npm run build` |
+| Start Command | `npm start` |
+| Instance Type | Free |
+
+4. En **Environment** agrega las variables:
+
+| Variable | Valor |
+|---|---|
+| `NODE_ENV` | `production` |
+| `DATABASE_URL` | la cadena de conexión de Neon |
+| `JWT_SECRET` | una cadena larga y aleatoria, distinta de la de desarrollo |
+| `JWT_EXPIRES_IN` | `2h` |
+
+5. Presiona **Deploy**. Cuando el registro diga `API escuchando`, abre la URL `https://<servicio>.onrender.com`.
+6. Comprueba desde otra computadora: el catálogo carga sin sesión, `/api/products` responde JSON y, con sesión, el CRUD respeta los permisos de cada rol.
+
+En el plan gratuito el servicio se duerme tras 15 minutos sin uso; la primera visita después tarda alrededor de un minuto en responder.
+
+Para probar el build de producción en local:
+
+```bash
+npm run build
+NODE_ENV=production npm start   # en PowerShell: $env:NODE_ENV="production"; npm start
+```
+
+y abrir http://localhost:3000.
 
 ## API
 
