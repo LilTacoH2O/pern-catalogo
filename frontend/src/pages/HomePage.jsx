@@ -3,9 +3,11 @@ import { PackageOpen, Plus, RefreshCw, Search } from "lucide-react";
 import { useProductStore } from "../store/useProductStore";
 import ProductCard from "../components/ProductCard";
 import ProductForm from "../components/ProductForm";
+import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 
 export default function HomePage() {
-  const { products, loading, error, fetchProducts, createProduct, updateProduct } = useProductStore();
+  const { products, loading, error, fetchProducts, createProduct, updateProduct, deleteProduct } =
+    useProductStore();
   const [search, setSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   // HU02 · alta de producto
@@ -16,6 +18,9 @@ export default function HomePage() {
   // HU03 · edición de producto (guarda el producto que se está editando)
   const [editing, setEditing] = useState(null);
   const [editError, setEditError] = useState("");
+  // HU04 · eliminación con confirmación
+  const [toDelete, setToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Al montar la página se pide el catálogo a la API
   useEffect(() => {
@@ -53,6 +58,14 @@ export default function HomePage() {
     } else {
       setEditError(result.message); // el modal queda abierto con los datos capturados
     }
+  };
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    const result = await deleteProduct(toDelete.id);
+    setDeleting(false);
+    setNotice(result.ok ? `Producto "${toDelete.name}" eliminado.` : `No se pudo eliminar: ${result.message}`);
+    setToDelete(null);
   };
 
   return (
@@ -122,6 +135,7 @@ export default function HomePage() {
               key={product.id}
               product={product}
               onEdit={(p) => { setEditError(""); setEditing(p); }}
+              onDelete={setToDelete}
             />
           ))}
         </div>
@@ -151,6 +165,12 @@ export default function HomePage() {
           </div>
         </dialog>
       )}
+      <ConfirmDeleteModal
+        product={toDelete}
+        onCancel={() => setToDelete(null)}
+        onConfirm={handleDelete}
+        deleting={deleting}
+      />
     </main>
   );
 }
