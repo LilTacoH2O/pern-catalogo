@@ -1,6 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import HomePage from "./pages/HomePage";
+import LoginPage from "./pages/LoginPage";
 
 export default function App() {
   return (
@@ -8,6 +9,7 @@ export default function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} /> {/* INV01 */}
       </Routes>
     </div>
   );
