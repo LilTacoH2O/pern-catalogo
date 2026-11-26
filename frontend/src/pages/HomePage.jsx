@@ -5,7 +5,7 @@ import ProductCard from "../components/ProductCard";
 import ProductForm from "../components/ProductForm";
 
 export default function HomePage() {
-  const { products, loading, error, fetchProducts, createProduct } = useProductStore();
+  const { products, loading, error, fetchProducts, createProduct, updateProduct } = useProductStore();
   const [search, setSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   // HU02 · alta de producto
@@ -13,6 +13,9 @@ export default function HomePage() {
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  // HU03 · edición de producto (guarda el producto que se está editando)
+  const [editing, setEditing] = useState(null);
+  const [editError, setEditError] = useState("");
 
   // Al montar la página se pide el catálogo a la API
   useEffect(() => {
@@ -36,6 +39,19 @@ export default function HomePage() {
       setNotice(`Producto "${data.name.trim()}" registrado.`);
     } else {
       setCreateError(result.message); // el modal queda abierto con los datos capturados
+    }
+  };
+
+  const handleUpdate = async (data) => {
+    setSaving(true);
+    setEditError("");
+    const result = await updateProduct(editing.id, data);
+    setSaving(false);
+    if (result.ok) {
+      setEditing(null);
+      setNotice(`Producto "${data.name.trim()}" actualizado.`);
+    } else {
+      setEditError(result.message); // el modal queda abierto con los datos capturados
     }
   };
 
@@ -102,7 +118,11 @@ export default function HomePage() {
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <ProductCard
+              key={product.id}
+              product={product}
+              onEdit={(p) => { setEditError(""); setEditing(p); }}
+            />
           ))}
         </div>
       )}
@@ -113,6 +133,21 @@ export default function HomePage() {
             {createError && <div role="alert" className="alert alert-error mb-4">{createError}</div>}
             <ProductForm onSubmit={handleCreate} submitLabel="Guardar producto" submitting={saving} />
             <button className="btn btn-ghost mt-2 w-full" onClick={() => setShowCreate(false)}>Cancelar</button>
+          </div>
+        </dialog>
+      )}
+      {editing && (
+        <dialog className="modal modal-open">
+          <div className="modal-box">
+            <h3 className="mb-4 text-xl font-bold">Editar producto</h3>
+            {editError && <div role="alert" className="alert alert-error mb-4">{editError}</div>}
+            <ProductForm
+              initialValues={editing}
+              onSubmit={handleUpdate}
+              submitLabel="Guardar cambios"
+              submitting={saving}
+            />
+            <button className="btn btn-ghost mt-2 w-full" onClick={() => setEditing(null)}>Cancelar</button>
           </div>
         </dialog>
       )}

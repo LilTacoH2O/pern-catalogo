@@ -1,5 +1,6 @@
 // Presenta un producto recibido por props: nombre, precio e imagen
-export default function ProductCard({ product }) {
+// onEdit (opcional) muestra el botón Editar (HU03)
+export default function ProductCard({ product, onEdit }) {
   const precio = Number(product.price).toLocaleString("es-MX", {
     style: "currency",
     currency: "MXN",
@@ -13,6 +14,13 @@ export default function ProductCard({ product }) {
       <div className="card-body">
         <h2 className="card-title">{product.name}</h2>
         <p className="text-2xl font-bold text-primary">{precio}</p>
+        {onEdit && (
+          <div className="card-actions justify-end">
+            <button className="btn btn-outline btn-sm" onClick={() => onEdit(product)}>
+              Editar
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );
