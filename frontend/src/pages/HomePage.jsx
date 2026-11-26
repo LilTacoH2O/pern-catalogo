@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { PackageOpen, Plus, RefreshCw, Search } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Lock, PackageOpen, Plus, RefreshCw, Search } from "lucide-react";
 import { useProductStore } from "../store/useProductStore";
+import { useAuthStore } from "../store/useAuthStore";
 import ProductCard from "../components/ProductCard";
 import ProductForm from "../components/ProductForm";
 import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
@@ -8,6 +10,8 @@ import ConfirmDeleteModal from "../components/ConfirmDeleteModal";
 export default function HomePage() {
   const { products, loading, error, fetchProducts, createProduct, updateProduct, deleteProduct } =
     useProductStore();
+  // INV01 · los botones se muestran según el rol (la API también lo valida)
+  const { user, can } = useAuthStore();
   const [search, setSearch] = useState("");
   const [appliedSearch, setAppliedSearch] = useState("");
   // HU02 · alta de producto
@@ -15,6 +19,7 @@ export default function HomePage() {
   const [createError, setCreateError] = useState("");
   const [saving, setSaving] = useState(false);
   const [notice, setNotice] = useState("");
+  const [noticeError, setNoticeError] = useState(false); // INV01: 401/403 se muestran en rojo
   // HU03 · edición de producto (guarda el producto que se está editando)
   const [editing, setEditing] = useState(null);
   const [editError, setEditError] = useState("");
@@ -41,6 +46,7 @@ export default function HomePage() {
     setSaving(false);
     if (result.ok) {
       setShowCreate(false);
+      setNoticeError(false);
       setNotice(`Producto "${data.name.trim()}" registrado.`);
     } else {
       setCreateError(result.message); // el modal queda abierto con los datos capturados
@@ -54,6 +60,7 @@ export default function HomePage() {
     setSaving(false);
     if (result.ok) {
       setEditing(null);
+      setNoticeError(false);
       setNotice(`Producto "${data.name.trim()}" actualizado.`);
     } else {
       setEditError(result.message); // el modal queda abierto con los datos capturados
@@ -64,6 +71,7 @@ export default function HomePage() {
     setDeleting(true);
     const result = await deleteProduct(toDelete.id);
     setDeleting(false);
+    setNoticeError(!result.ok);
     setNotice(result.ok ? `Producto "${toDelete.name}" eliminado.` : `No se pudo eliminar: ${result.message}`);
     setToDelete(null);
   };
@@ -73,10 +81,12 @@ export default function HomePage() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-3xl font-bold">Productos disponibles</h1>
         <div className="flex gap-2">
-          <button className="btn btn-primary" onClick={() => { setCreateError(""); setShowCreate(true); }}>
-            <Plus className="size-5" />
-            Agregar producto
-          </button>
+          {can("crear") && (
+            <button className="btn btn-primary" onClick={() => { setCreateError(""); setShowCreate(true); }}>
+              <Plus className="size-5" />
+              Agregar producto
+            </button>
+          )}
           <button
             className="btn btn-ghost btn-circle"
             onClick={() => fetchProducts(appliedSearch)}
@@ -87,8 +97,15 @@ export default function HomePage() {
         </div>
       </div>
 
+      {!user && (
+        <div className="alert mb-6">
+          <Lock className="size-5" />
+          <span>Estás viendo el catálogo público. <Link to="/login" className="link link-primary">Inicia sesión</Link> para administrarlo.</span>
+        </div>
+      )}
+
       {notice && (
-        <div role="status" className="alert alert-success mb-6">
+        <div role="status" className={`alert mb-6 ${noticeError ? "alert-error" : "alert-success"}`}>
           <span>{notice}</span>
           <button className="btn btn-ghost btn-sm" onClick={() => setNotice("")}>Cerrar</button>
         </div>
@@ -134,8 +151,8 @@ export default function HomePage() {
             <ProductCard
               key={product.id}
               product={product}
-              onEdit={(p) => { setEditError(""); setEditing(p); }}
-              onDelete={setToDelete}
+              onEdit={can("editar") ? (p) => { setEditError(""); setEditing(p); } : undefined}
+              onDelete={can("eliminar") ? setToDelete : undefined}
             />
           ))}
         </div>
