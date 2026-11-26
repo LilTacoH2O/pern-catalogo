@@ -55,4 +55,20 @@ export const useProductStore = create((set, get) => ({
       return { ok: false, message: mensajeDeError(err) };
     }
   },
+
+  // HU04 · DELETE /api/products/:id
+  deleteProduct: async (id) => {
+    try {
+      await axios.delete(`${API_URL}/api/products/${id}`);
+      // Se quita de la lista solo cuando la API confirma
+      set({ products: get().products.filter((p) => p.id !== id) });
+      return { ok: true };
+    } catch (err) {
+      if (err.response?.status === 404) {
+        // Ya no existía en la base: también se quita de la vista
+        set({ products: get().products.filter((p) => p.id !== id) });
+      }
+      return { ok: false, status: err.response?.status, message: mensajeDeError(err) };
+    }
+  },
 }));
