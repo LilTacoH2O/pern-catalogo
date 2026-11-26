@@ -63,3 +63,23 @@ export const updateProduct = async (req, res) => {
     res.status(500).json({ success: false, message: "Error interno del servidor" });
   }
 };
+
+// DELETE /api/products/:id -> retira un producto del catálogo (HU04)
+// req.params.id ya viene validado (validateId)
+export const deleteProduct = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [product] = await sql`
+      DELETE FROM products
+      WHERE id = ${id}
+      RETURNING id, name, price, image, created_at
+    `;
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Producto no encontrado" });
+    }
+    res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    console.error("Error en deleteProduct:", error.message);
+    res.status(500).json({ success: false, message: "Error interno del servidor" });
+  }
+};
