@@ -9,7 +9,7 @@ Práctica guiada de la Unidad 4 de Ingeniería de Software (TecNM Celaya). Es un
 | API REST | Node.js + Express, helmet, morgan, cors, dotenv, Zod, bcryptjs, jsonwebtoken | Valida la petición y el rol, ejecuta la operación y responde JSON |
 | Base de datos | PostgreSQL en Neon (`@neondatabase/serverless`) | Guarda productos y usuarios (con hash de contraseña) y aplica las restricciones del esquema |
 
-**Aplicación publicada:** [pegar URL de Render]
+**Aplicación publicada:** https://pern-catalogo.onrender.com
 
 ## Equipo
 
